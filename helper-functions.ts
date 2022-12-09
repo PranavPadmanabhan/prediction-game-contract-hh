@@ -2,43 +2,8 @@ import { ethers, network, run } from "hardhat"
 import { networkConfig } from "./helper-hardhat-config"
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import { BigNumber, constants } from "ethers"
-import { LinkToken, LinkToken__factory } from "./typechain"
-
-export const autoFundCheck = async (
-    contractAddr: string,
-    networkName: string,
-    linkTokenAddress: string,
-    additionalMessage: string
-) => {
-    const chainId: number | undefined = network.config.chainId
-
-    console.log("Checking to see if contract can be auto-funded with LINK:")
-
-    if (!chainId) return
-    const amount: BigNumber = networkConfig[chainId].fundAmount
-
-    const accounts: SignerWithAddress[] = await ethers.getSigners()
-    const signer: SignerWithAddress = accounts[0]
-
-    const linkTokenContract: LinkToken = LinkToken__factory.connect(linkTokenAddress, signer)
-
-    const balance: BigNumber = await linkTokenContract.balanceOf(signer.address)
-    const contractBalance: BigNumber = await linkTokenContract.balanceOf(contractAddr)
-
-    if (balance > amount && amount > constants.Zero && contractBalance < amount) {
-        //user has enough LINK to auto-fund and the contract isn't already funded
-        return true
-    } else {
-        //user doesn't have enough LINK, print a warning
-        console.warn(
-            `Account doesn't have enough LINK to fund contracts, or you're deploying to a network where auto funding isnt' done by default\n`,
-            `Please obtain LINK via the faucet at https://faucets.chain.link/, then run the following command to fund contract with LINK:\n`,
-            `yarn hardhat fund-link --contract ${contractAddr} --network ${networkName} ${additionalMessage}`
-        )
-
-        return false
-    }
-}
+import "dotenv/config"
+import fs from "fs"
 
 export const verify = async (contractAddress: string, args: any[]) => {
     console.log("Verifying contract...")
@@ -55,3 +20,32 @@ export const verify = async (contractAddress: string, args: any[]) => {
         }
     }
 }
+
+const FRONTEND_CONTRACT_ADDRESS_FILE =
+    "../../solidity tutorial/frontend/raffle/constants/contractAddresses.json"
+const FRONTEND_ABI_FILE = "../../solidity tutorial/frontend/raffle/constants/abi.json"
+
+const chainId = network.config.chainId!.toString() === "5" ? "5" : "31337"
+
+async function updateABI(abi: any) {
+    // const raffle: Raffle = await ethers.getContract("Raffle");
+
+    fs.writeFileSync(FRONTEND_ABI_FILE, JSON.stringify(abi))
+}
+
+async function updateContractAddresses(contract: any) {
+    // const contract: contract = await ethers.getContract("contract");
+    console.log(chainId)
+    const file = fs.readFileSync(FRONTEND_CONTRACT_ADDRESS_FILE, "utf8")
+    const currentContractAddresses = JSON.parse(file)
+    if (chainId in currentContractAddresses) {
+        if (!currentContractAddresses[chainId].includes(contract.address)) {
+            currentContractAddresses[chainId].push(contract.address)
+        }
+    } else {
+        currentContractAddresses[chainId] = [contract.address]
+    }
+    fs.writeFileSync(FRONTEND_CONTRACT_ADDRESS_FILE, JSON.stringify(currentContractAddresses))
+}
+
+export { updateABI, updateContractAddresses }

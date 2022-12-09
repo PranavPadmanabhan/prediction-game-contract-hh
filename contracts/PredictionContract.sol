@@ -3,6 +3,7 @@ pragma solidity ^0.8.7;
 
 import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./PriceFeed.sol";
 
 error Prediction__Limit_Exceeded();
@@ -38,8 +39,9 @@ contract PredictionContract is AutomationCompatibleInterface {
     uint256 private immutable i_interval;
     mapping(uint256 => mapping(address => uint256)) private AmountOf;
     mapping(uint256 => Prediction[]) private PredictionsOf;
-    // uint256[] private rewardArray;
     mapping(uint256 => uint256[]) private rewardArrayOf;
+    IERC20 Token;
+    address private tokenAddress;
 
     // EVENTS
 
@@ -57,12 +59,15 @@ contract PredictionContract is AutomationCompatibleInterface {
     constructor(
         address[] memory addresses,
         uint256 entranceFee,
-        uint256 interval
+        uint256 interval,
+        address _tokenAddress
     ) {
         s_lastTimeStamp = block.timestamp;
         i_entranceFee = entranceFee;
         priceFeedAddresses = addresses;
         i_interval = interval;
+        Token = IERC20(_tokenAddress);
+        tokenAddress = _tokenAddress;
         createContest();
     }
 
@@ -76,9 +81,10 @@ contract PredictionContract is AutomationCompatibleInterface {
         if (PredictionsOf[contestId - 1].length > 100) {
             revert Prediction__Limit_Exceeded();
         }
-        if (msg.value < i_entranceFee) {
+        if (Token.balanceOf(msg.sender) < 1) {
             revert Prediction__Not_Enough_Amount();
         }
+        Token.transferFrom(msg.sender, address(this), 1 ether);
         PredictionsOf[contestId - 1].push(
             Prediction(_predictedValue, block.timestamp, 0, msg.sender, i_entranceFee)
         );
@@ -106,12 +112,7 @@ contract PredictionContract is AutomationCompatibleInterface {
     function setDifference(uint256 contestId) public payable {
         if (PredictionsOf[contestId - 1].length < 2) {
             for (uint256 i = 0; i < PredictionsOf[contestId - 1].length; i++) {
-                (bool success, ) = payable(PredictionsOf[contestId - 1][i].user).call{
-                    value: i_entranceFee
-                }("");
-                if (!success) {
-                    revert Prediction__Refund_Error();
-                }
+                Token.transfer(PredictionsOf[contestId - 1][i].user, 1 ether);
             }
             emit ContestCancelled(contestId);
         }
@@ -150,11 +151,10 @@ contract PredictionContract is AutomationCompatibleInterface {
             }
         }
         for (uint256 i = 0; i < PredictionsOf[contestId - 1].length; i++) {
-            (bool success, ) = payable(PredictionsOf[contestId - 1][i].user).call{
-                value: rewardArrayOf[contestId - 1][i]
-            }("");
-            require(success, "error");
+            Token.transfer(PredictionsOf[contestId - 1][i].user, rewardArrayOf[contestId - 1][i]);
         }
+        delete PredictionsOf[contestId - 1];
+        delete rewardArrayOf[contestId - 1];
         emit ContestCompleted(contestId);
     }
 
@@ -204,7 +204,7 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     function getEntranceFee() public view returns (uint256) {
-        i_entranceFee;
+        return i_entranceFee;
     }
 
     function getRewardArray(uint256 contestId) public view returns (uint256[] memory) {

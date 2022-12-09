@@ -18,6 +18,7 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
     if (!chainId) return
 
     let ethUsdPriceFeedAddress: string | undefined
+    const Token = await deployments.get("Token")
 
     if (chainId === 31337) {
         const EthUsdAggregator = await deployments.get("MockV3Aggregator")
@@ -32,9 +33,12 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
         ? 1
         : VERIFICATION_BLOCK_CONFIRMATIONS
     log(`----------------------------------------------------`)
+
+    const args = [[ethUsdPriceFeedAddress], fee, interval, Token.address]
+
     const predictionContract = await deploy("PredictionContract", {
         from: deployer,
-        args: [[ethUsdPriceFeedAddress], fee, interval],
+        args: args,
         log: true,
         waitConfirmations: waitBlockConfirmations,
     })
@@ -47,4 +51,4 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
 }
 
 export default deployFunction
-deployFunction.tags = [`all`, `feed`, `main`]
+deployFunction.tags = [`all`, `main`]

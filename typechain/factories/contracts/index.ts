@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { PredictionContract__factory } from "./PredictionContract__factory";
+export { Token__factory } from "./Token__factory";

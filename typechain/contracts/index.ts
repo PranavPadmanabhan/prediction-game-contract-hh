@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { PredictionContract } from "./PredictionContract";
+export type { Token } from "./Token";
