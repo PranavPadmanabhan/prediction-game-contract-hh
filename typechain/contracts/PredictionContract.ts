@@ -76,6 +76,7 @@ export interface PredictionContractInterface extends utils.Interface {
     "getResult(uint256)": FunctionFragment;
     "getRewardArray(uint256)": FunctionFragment;
     "getTotalBalance(uint256)": FunctionFragment;
+    "getWinners(uint256)": FunctionFragment;
     "performUpkeep(bytes)": FunctionFragment;
     "predict(uint256,int256)": FunctionFragment;
     "setDifference(uint256)": FunctionFragment;
@@ -96,6 +97,7 @@ export interface PredictionContractInterface extends utils.Interface {
       | "getResult"
       | "getRewardArray"
       | "getTotalBalance"
+      | "getWinners"
       | "performUpkeep"
       | "predict"
       | "setDifference"
@@ -148,6 +150,10 @@ export interface PredictionContractInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getTotalBalance",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getWinners",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -209,6 +215,7 @@ export interface PredictionContractInterface extends utils.Interface {
     functionFragment: "getTotalBalance",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getWinners", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "performUpkeep",
     data: BytesLike
@@ -344,6 +351,11 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    getWinners(
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[string[]]>;
+
     performUpkeep(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -414,6 +426,11 @@ export interface PredictionContract extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  getWinners(
+    contestId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<string[]>;
+
   performUpkeep(
     arg0: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -483,6 +500,11 @@ export interface PredictionContract extends BaseContract {
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    getWinners(
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
 
     performUpkeep(
       arg0: PromiseOrValue<BytesLike>,
@@ -576,6 +598,11 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getWinners(
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     performUpkeep(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -645,6 +672,11 @@ export interface PredictionContract extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getTotalBalance(
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getWinners(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;

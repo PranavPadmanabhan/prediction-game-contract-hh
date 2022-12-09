@@ -39,7 +39,7 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
           })
 
           describe("setDifference", async () => {
-              describe("set difference if players less than 2", async () => {
+              describe("set difference, if players less than 2", async () => {
                   beforeEach(async () => {
                       for (let i = 1; i < 2; i++) {
                           await Token.connect(accounts[i]).mint()
@@ -51,7 +51,7 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
                           await predictionContract.connect(accounts[i]).predict(1, 1998 + i)
                       }
                   })
-                  it("should sent money to players if players is less than 2", async () => {
+                  it("should not work if players is less than 2", async () => {
                       const Contractbalance = await Token.balanceOf(predictionContract.address)
                       const transactionResponse = await predictionContract.setDifference(1)
                       await transactionResponse.wait(1)
@@ -86,7 +86,7 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
                               entranceFee
                           )
                           await Token.allowance(predictionContract.address, accounts[i].address)
-                          await predictionContract.connect(accounts[i]).predict(1, 1995 + i)
+                          await predictionContract.connect(accounts[i]).predict(1, 1990 + i)
                       }
                   })
 
@@ -107,6 +107,27 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
                       const predictions = await predictionContract.getPredictions(1)
                       predictions.map(({ difference }) => {
                           assert(parseInt(difference.toString()) >= 0)
+                      })
+                  })
+                  it("check", async () => {
+                      await predictionContract.setDifference(1)
+                      const tx = await predictionContract.getResult(1)
+                      await tx.wait(1)
+                      const winners = await predictionContract.getWinners(1)
+                      const rewards = await predictionContract.getRewardArray(1)
+                      console.log("Rewards")
+                      rewards.map((item) => console.log(item.toString()))
+                      console.log("-------------------------------------------------")
+                      console.log("Winners")
+                      winners.map((item) => console.log(item.toString()))
+                      console.log("=================================================")
+                      console.log("Players")
+                      accounts.map((item, i) => {
+                          if (winners.includes(item["address"])) {
+                              console.log(
+                                  `${winners.indexOf(item["address"]) + 1} .  ${item["address"]}`
+                              )
+                          }
                       })
                   })
               })

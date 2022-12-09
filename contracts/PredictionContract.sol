@@ -34,14 +34,14 @@ contract PredictionContract is AutomationCompatibleInterface {
     // STATE VARIABLES
     Contest[] private s_contests;
     uint256 private s_lastTimeStamp;
-    address[] private priceFeedAddresses;
+    address[] private s_priceFeedAddresses;
     uint256 private immutable i_entranceFee;
     uint256 private immutable i_interval;
-    mapping(uint256 => mapping(address => uint256)) private AmountOf;
-    mapping(uint256 => Prediction[]) private PredictionsOf;
-    mapping(uint256 => uint256[]) private rewardArrayOf;
+    mapping(uint256 => Prediction[]) private s_PredictionsOf;
+    mapping(uint256 => uint256[]) private s_RewardArrayOf;
+    mapping(uint256 => address[]) private s_WinnersOf;
     IERC20 Token;
-    address private tokenAddress;
+    address private s_tokenAddress;
 
     // EVENTS
 
@@ -60,73 +60,73 @@ contract PredictionContract is AutomationCompatibleInterface {
         address[] memory addresses,
         uint256 entranceFee,
         uint256 interval,
-        address _tokenAddress
+        address _s_tokenAddress
     ) {
         s_lastTimeStamp = block.timestamp;
         i_entranceFee = entranceFee;
-        priceFeedAddresses = addresses;
+        s_priceFeedAddresses = addresses;
         i_interval = interval;
-        Token = IERC20(_tokenAddress);
-        tokenAddress = _tokenAddress;
+        Token = IERC20(_s_tokenAddress);
+        s_tokenAddress = _s_tokenAddress;
         createContest();
     }
 
     function createContest() internal {
-        for (uint256 i = 0; i < priceFeedAddresses.length; i++) {
-            s_contests.push(Contest(i + 1, priceFeedAddresses[i]));
+        for (uint256 i = 0; i < s_priceFeedAddresses.length; i++) {
+            s_contests.push(Contest(i + 1, s_priceFeedAddresses[i]));
         }
     }
 
     function predict(uint256 contestId, int256 _predictedValue) public payable {
-        if (PredictionsOf[contestId - 1].length > 100) {
+        if (s_PredictionsOf[contestId - 1].length > 100) {
             revert Prediction__Limit_Exceeded();
         }
         if (Token.balanceOf(msg.sender) < 1) {
             revert Prediction__Not_Enough_Amount();
         }
         Token.transferFrom(msg.sender, address(this), 1 ether);
-        PredictionsOf[contestId - 1].push(
+        s_PredictionsOf[contestId - 1].push(
             Prediction(_predictedValue, block.timestamp, 0, msg.sender, i_entranceFee)
         );
-        AmountOf[contestId - 1][msg.sender] = i_entranceFee;
         emit NewPrediction(_predictedValue, block.timestamp, 0, msg.sender);
     }
 
     function setRewardArray(uint256 contestId) public {
-        uint256 amountForDistribution = (PredictionsOf[contestId - 1].length * i_entranceFee * 8) /
-            10;
-        for (uint256 i = 0; i < PredictionsOf[contestId - 1].length; i++) {
-            // rewardArrayOf[contestId - 1].push(
-            //     ((amountForDistribution * (i + 1)) /
-            //         (PredictionsOf[contestId - 1].length *
-            //             ((PredictionsOf[contestId - 1].length + 10) / 2)))
-            // );
+        uint256 amountForDistribution = (s_PredictionsOf[contestId - 1].length *
+            i_entranceFee *
+            8) / 10;
+        for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
             if (i == 0) {
-                rewardArrayOf[contestId - 1].push((amountForDistribution * 5) / 10);
+                s_RewardArrayOf[contestId - 1].push((amountForDistribution * 5) / 10);
             } else {
-                rewardArrayOf[contestId - 1].push((rewardArrayOf[contestId - 1][i - 1] * 5) / 10);
+                s_RewardArrayOf[contestId - 1].push(
+                    (s_RewardArrayOf[contestId - 1][i - 1] * 5) / 10
+                );
             }
         }
     }
 
     function setDifference(uint256 contestId) public payable {
-        if (PredictionsOf[contestId - 1].length < 2) {
-            for (uint256 i = 0; i < PredictionsOf[contestId - 1].length; i++) {
-                Token.transfer(PredictionsOf[contestId - 1][i].user, 1 ether);
+        if (s_PredictionsOf[contestId - 1].length < 2) {
+            for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
+                Token.transfer(s_PredictionsOf[contestId - 1][i].user, 1 ether);
             }
+            delete s_PredictionsOf[contestId - 1];
+            delete s_RewardArrayOf[contestId - 1];
             emit ContestCancelled(contestId);
         }
         (int256 price, uint8 decimal) = PriceFeed.getUSDPrice(
             AggregatorV3Interface(s_contests[contestId - 1].priceFeedAddress)
         ); /*AggregatorV3Interface(s_contests[contestId - 1].priceFeedAddress)*/
         setRewardArray(contestId);
-        for (uint256 i = 0; i < PredictionsOf[contestId - 1].length; i++) {
-            int256 value = int256(PredictionsOf[contestId - 1][i].predictedValue) *
+        delete s_WinnersOf[contestId - 1];
+        for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
+            int256 value = int256(s_PredictionsOf[contestId - 1][i].predictedValue) *
                 int256(10**decimal);
             if (value < price) {
-                PredictionsOf[contestId - 1][i].difference = uint256(price - value);
+                s_PredictionsOf[contestId - 1][i].difference = uint256(price - value);
             } else {
-                PredictionsOf[contestId - 1][i].difference = uint256(value - price);
+                s_PredictionsOf[contestId - 1][i].difference = uint256(value - price);
             }
         }
     }
@@ -134,27 +134,31 @@ contract PredictionContract is AutomationCompatibleInterface {
     function getResult(uint256 contestId) public payable {
         setDifference(contestId);
         Prediction memory data;
-        for (uint256 i = 0; i < PredictionsOf[contestId - 1].length; i++) {
-            for (uint256 j = 0; j < PredictionsOf[contestId - 1].length - i - 1; j++) {
+        for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
+            for (uint256 j = 0; j < s_PredictionsOf[contestId - 1].length - i - 1; j++) {
                 if (
-                    PredictionsOf[contestId - 1][j].difference >
-                    PredictionsOf[contestId - 1][j + 1].difference ||
-                    (PredictionsOf[contestId - 1][j].difference ==
-                        PredictionsOf[contestId - 1][j + 1].difference &&
-                        PredictionsOf[contestId - 1][j].predictedAt >
-                        PredictionsOf[contestId - 1][j + 1].predictedAt)
+                    s_PredictionsOf[contestId - 1][j].difference >
+                    s_PredictionsOf[contestId - 1][j + 1].difference ||
+                    (s_PredictionsOf[contestId - 1][j].difference ==
+                        s_PredictionsOf[contestId - 1][j + 1].difference &&
+                        s_PredictionsOf[contestId - 1][j].predictedAt >
+                        s_PredictionsOf[contestId - 1][j + 1].predictedAt)
                 ) {
-                    data = PredictionsOf[contestId - 1][j];
-                    PredictionsOf[contestId - 1][j] = PredictionsOf[contestId - 1][j + 1];
-                    PredictionsOf[contestId - 1][j + 1] = data;
+                    data = s_PredictionsOf[contestId - 1][j];
+                    s_PredictionsOf[contestId - 1][j] = s_PredictionsOf[contestId - 1][j + 1];
+                    s_PredictionsOf[contestId - 1][j + 1] = data;
                 }
             }
         }
-        for (uint256 i = 0; i < PredictionsOf[contestId - 1].length; i++) {
-            Token.transfer(PredictionsOf[contestId - 1][i].user, rewardArrayOf[contestId - 1][i]);
+        for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
+            s_WinnersOf[contestId - 1].push(s_PredictionsOf[contestId - 1][i].user);
+            Token.transfer(
+                s_PredictionsOf[contestId - 1][i].user,
+                s_RewardArrayOf[contestId - 1][i]
+            );
         }
-        delete PredictionsOf[contestId - 1];
-        delete rewardArrayOf[contestId - 1];
+        delete s_PredictionsOf[contestId - 1];
+        delete s_RewardArrayOf[contestId - 1];
         emit ContestCompleted(contestId);
     }
 
@@ -192,7 +196,7 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     function getPredictions(uint256 contestId) public view returns (Prediction[] memory) {
-        return PredictionsOf[contestId - 1];
+        return s_PredictionsOf[contestId - 1];
     }
 
     function getLatestTimeStamp() public view returns (uint256) {
@@ -208,17 +212,11 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     function getRewardArray(uint256 contestId) public view returns (uint256[] memory) {
-        return rewardArrayOf[contestId - 1];
+        return s_RewardArrayOf[contestId - 1];
     }
 
-    // function getDiffereces(uint contestId,uint index) public view returns(uint){
-    //     for(uint i = 0; i< PredictionsOf[contestId - 1].length; i++){
-    //         return PredictionsOf[contestId - 1][index].difference;
-    //     }
-    // }
-
     function getTotalBalance(uint256 contestId) public view returns (uint256) {
-        return PredictionsOf[contestId - 1].length * i_entranceFee;
+        return s_PredictionsOf[contestId - 1].length * i_entranceFee;
     }
 
     function getLatestPrice(uint256 contestId) public view returns (int256, uint8) {
@@ -229,6 +227,10 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     function getDistributionAmount(uint256 contestId) public view returns (uint256) {
-        return (PredictionsOf[contestId - 1].length * i_entranceFee * 8) / 10;
+        return (s_PredictionsOf[contestId - 1].length * i_entranceFee * 8) / 10;
+    }
+
+    function getWinners(uint256 contestId) public view returns (address[] memory) {
+        return s_WinnersOf[contestId - 1];
     }
 }
