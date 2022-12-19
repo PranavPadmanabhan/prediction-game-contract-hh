@@ -11,7 +11,7 @@ type NetworkConfigItem = {
     keepersUpdateInterval?: string
     oracle?: string
     jobId?: string
-    ethUsdPriceFeed?: string
+    ethUsdPriceFeed?: string[]
 }
 
 type NetworkConfigMap = {
@@ -34,7 +34,7 @@ export const networkConfig: NetworkConfigMap = {
         jobId: "29fa9aa13bf1468788b7cc4a500a45b8",
         fundAmount: BigNumber.from("1000000000000000000"),
         keepersUpdateInterval: "30",
-        ethUsdPriceFeed: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
+        ethUsdPriceFeed: ["0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"],
     },
     1: {
         name: "mainnet",
@@ -45,7 +45,20 @@ export const networkConfig: NetworkConfigMap = {
     5: {
         name: "goerli",
         linkToken: "0x326c977e6efc84e512bb9c30f76e30c160ed06fb",
-        ethUsdPriceFeed: "0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e",
+        ethUsdPriceFeed: [
+            "0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e", //ETH / USD
+            "0xA39434A63A52E749F02807ae27335515BA4b07F7", // BTC / USD
+            "0x0d79df66BE487753B02D015Fb622DED7f0E9798d", // DAI / USD
+            "0x48731cF7e84dc94C5f84577882c14Be11a5B7456", // LINK / USD
+            "0x7A65Cf6C2ACE993f09231EC1Ea7363fb29C13f2F", // FORTH / USD
+            "0xdC5f59e61e51b90264b38F0202156F07956E2577", // SNX / USD
+            "0x295b398c95cEB896aFA18F25d0c6431Fd17b1431", // JPY / USD
+            "0xAE45DCb3eB59E27f05C170752B218C6174394Df8", // CZK / USD
+            "0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7", // USDC / USD
+            "0x7b219F57a8e9C7303204Af681e9fA69d17ef626f", // XAU / USD
+            "0x779877A7B0D9E8603169DdbD7836e478b4624789", // BTC / ETH
+            "0xb4c4a493AB6356497713A78FFA6c60FB53517c63", // LINK / ETH
+        ],
         keyHash: "0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15",
         vrfCoordinator: "0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D",
         oracle: "0xCC79157eb46F5624204f47AB42b3906cAA40eaB7",
@@ -57,7 +70,7 @@ export const networkConfig: NetworkConfigMap = {
     137: {
         name: "polygon",
         linkToken: "0xb0897686c545045afc77cf20ec7a532e3120e0f1",
-        ethUsdPriceFeed: "0xF9680D99D6C9589e2a93a78A04A279e509205945",
+        ethUsdPriceFeed: ["0xF9680D99D6C9589e2a93a78A04A279e509205945"],
         oracle: "0x0a31078cd57d23bf9e8e8f1ba78356ca2090569e",
         jobId: "12b86114fa9e46bab3ca436f88e1a912",
         fee: "100000000000000",

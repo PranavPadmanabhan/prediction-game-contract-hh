@@ -72,6 +72,7 @@ export interface PredictionContractInterface extends utils.Interface {
     "getLatestPrice(uint256)": FunctionFragment;
     "getLatestTimeStamp()": FunctionFragment;
     "getNumOfContests()": FunctionFragment;
+    "getNumOfMaxPlayers()": FunctionFragment;
     "getPredictions(uint256)": FunctionFragment;
     "getResult(uint256)": FunctionFragment;
     "getRewardArray(uint256)": FunctionFragment;
@@ -93,6 +94,7 @@ export interface PredictionContractInterface extends utils.Interface {
       | "getLatestPrice"
       | "getLatestTimeStamp"
       | "getNumOfContests"
+      | "getNumOfMaxPlayers"
       | "getPredictions"
       | "getResult"
       | "getRewardArray"
@@ -134,6 +136,10 @@ export interface PredictionContractInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getNumOfContests",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getNumOfMaxPlayers",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -200,6 +206,10 @@ export interface PredictionContractInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getNumOfContests",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getNumOfMaxPlayers",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -330,6 +340,8 @@ export interface PredictionContract extends BaseContract {
 
     getNumOfContests(overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    getNumOfMaxPlayers(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     getPredictions(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -404,6 +416,8 @@ export interface PredictionContract extends BaseContract {
 
   getNumOfContests(overrides?: CallOverrides): Promise<BigNumber>;
 
+  getNumOfMaxPlayers(overrides?: CallOverrides): Promise<BigNumber>;
+
   getPredictions(
     contestId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
@@ -477,6 +491,8 @@ export interface PredictionContract extends BaseContract {
     getLatestTimeStamp(overrides?: CallOverrides): Promise<BigNumber>;
 
     getNumOfContests(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getNumOfMaxPlayers(overrides?: CallOverrides): Promise<BigNumber>;
 
     getPredictions(
       contestId: PromiseOrValue<BigNumberish>,
@@ -572,6 +588,8 @@ export interface PredictionContract extends BaseContract {
 
     getNumOfContests(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getNumOfMaxPlayers(overrides?: CallOverrides): Promise<BigNumber>;
+
     getPredictions(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -646,6 +664,10 @@ export interface PredictionContract extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getNumOfContests(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getNumOfMaxPlayers(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     getPredictions(
       contestId: PromiseOrValue<BigNumberish>,

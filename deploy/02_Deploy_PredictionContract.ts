@@ -5,10 +5,10 @@ import {
     developmentChains,
     VERIFICATION_BLOCK_CONFIRMATIONS,
 } from "../helper-hardhat-config"
-import { verify } from "../helper-functions"
+import { updateABI, updateContractAddresses, verify } from "../helper-functions"
 
 const fee = ethers.utils.parseEther("1")
-const interval = 2
+const interval = 600
 
 const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments }) => {
     const { deploy, log } = deployments
@@ -17,14 +17,14 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
     const chainId: number | undefined = network.config.chainId
     if (!chainId) return
 
-    let ethUsdPriceFeedAddress: string | undefined
+    let ethUsdPriceFeedAddresses: string[] | undefined
     const Token = await deployments.get("Token")
 
     if (chainId === 31337) {
         const EthUsdAggregator = await deployments.get("MockV3Aggregator")
-        ethUsdPriceFeedAddress = EthUsdAggregator.address
+        ethUsdPriceFeedAddresses = [EthUsdAggregator.address]
     } else {
-        ethUsdPriceFeedAddress = networkConfig[chainId].ethUsdPriceFeed
+        ethUsdPriceFeedAddresses = networkConfig[chainId].ethUsdPriceFeed
     }
 
     // Price Feed Address, values can be obtained at https://docs.chain.link/docs/reference-contracts
@@ -34,7 +34,7 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
         : VERIFICATION_BLOCK_CONFIRMATIONS
     log(`----------------------------------------------------`)
 
-    const args = [[ethUsdPriceFeedAddress], fee, interval, Token.address]
+    const args = [ethUsdPriceFeedAddresses, fee, interval]
 
     const predictionContract = await deploy("PredictionContract", {
         from: deployer,
@@ -42,11 +42,15 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
         log: true,
         waitConfirmations: waitBlockConfirmations,
     })
+    updateABI(predictionContract.abi)
+    updateContractAddresses(predictionContract)
 
     // Verify the deployment
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         log("Verifying...")
-        await verify(predictionContract.address, [ethUsdPriceFeedAddress])
+        await verify(predictionContract.address, args)
+        updateABI(predictionContract.abi)
+        updateContractAddresses(predictionContract)
     }
 }
 

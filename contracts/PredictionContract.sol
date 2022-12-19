@@ -9,6 +9,7 @@ import "./PriceFeed.sol";
 error Prediction__Limit_Exceeded();
 error Prediction__Not_Enough_Amount();
 error Prediction__Refund_Error();
+error Prediction__Reward_Failed();
 
 contract PredictionContract is AutomationCompatibleInterface {
     // create all the contest - done
@@ -40,8 +41,10 @@ contract PredictionContract is AutomationCompatibleInterface {
     mapping(uint256 => Prediction[]) private s_PredictionsOf;
     mapping(uint256 => uint256[]) private s_RewardArrayOf;
     mapping(uint256 => address[]) private s_WinnersOf;
-    IERC20 Token;
-    address private s_tokenAddress;
+    // IERC20 Token;
+    // address private s_tokenAddress;
+    uint256 private s_max_players = 100;
+    // uint256 private s_entrance_fee = 4 ether;
 
     // EVENTS
 
@@ -59,15 +62,14 @@ contract PredictionContract is AutomationCompatibleInterface {
     constructor(
         address[] memory addresses,
         uint256 entranceFee,
-        uint256 interval,
-        address _s_tokenAddress
+        uint256 interval // address _s_tokenAddress
     ) {
         s_lastTimeStamp = block.timestamp;
         i_entranceFee = entranceFee;
         s_priceFeedAddresses = addresses;
         i_interval = interval;
-        Token = IERC20(_s_tokenAddress);
-        s_tokenAddress = _s_tokenAddress;
+        // Token = IERC20(_s_tokenAddress);
+        // s_tokenAddress = _s_tokenAddress;
         createContest();
     }
 
@@ -78,13 +80,16 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     function predict(uint256 contestId, int256 _predictedValue) public payable {
-        if (s_PredictionsOf[contestId - 1].length > 100) {
+        if (s_PredictionsOf[contestId - 1].length > s_max_players) {
             revert Prediction__Limit_Exceeded();
         }
-        if (Token.balanceOf(msg.sender) < 1) {
+        // if (Token.balanceOf(msg.sender) < 1) {
+        //     revert Prediction__Not_Enough_Amount();
+        // }
+        if (msg.value != i_entranceFee) {
             revert Prediction__Not_Enough_Amount();
         }
-        Token.transferFrom(msg.sender, address(this), 1 ether);
+        // Token.transferFrom(msg.sender, address(this), 4 ether);
         s_PredictionsOf[contestId - 1].push(
             Prediction(_predictedValue, block.timestamp, 0, msg.sender, i_entranceFee)
         );
@@ -92,9 +97,7 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     function setRewardArray(uint256 contestId) public {
-        uint256 amountForDistribution = (s_PredictionsOf[contestId - 1].length *
-            i_entranceFee *
-            8) / 10;
+        uint256 amountForDistribution = (address(this).balance * 8) / 10;
         for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
             if (i == 0) {
                 s_RewardArrayOf[contestId - 1].push((amountForDistribution * 5) / 10);
@@ -107,9 +110,15 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     function setDifference(uint256 contestId) public payable {
-        if (s_PredictionsOf[contestId - 1].length < 2) {
+        if (s_PredictionsOf[contestId - 1].length < 5) {
             for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
-                Token.transfer(s_PredictionsOf[contestId - 1][i].user, 1 ether);
+                // Token.transfer(s_PredictionsOf[contestId - 1][i].user, 4 ether);
+                (bool success, ) = payable(s_PredictionsOf[contestId - 1][i].user).call{
+                    value: i_entranceFee
+                }("");
+                if (!success) {
+                    revert Prediction__Refund_Error();
+                }
             }
             delete s_PredictionsOf[contestId - 1];
             delete s_RewardArrayOf[contestId - 1];
@@ -152,14 +161,32 @@ contract PredictionContract is AutomationCompatibleInterface {
         }
         for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
             s_WinnersOf[contestId - 1].push(s_PredictionsOf[contestId - 1][i].user);
-            Token.transfer(
-                s_PredictionsOf[contestId - 1][i].user,
-                s_RewardArrayOf[contestId - 1][i]
-            );
+            // Token.transfer(
+            //     s_PredictionsOf[contestId - 1][i].user,
+            //     s_RewardArrayOf[contestId - 1][i]
+            // );
+            (bool success, ) = payable(s_PredictionsOf[contestId - 1][i].user).call{
+                value: s_RewardArrayOf[contestId - 1][i]
+            }("");
+            if (!success) {
+                revert Prediction__Reward_Failed();
+            }
         }
         delete s_PredictionsOf[contestId - 1];
         delete s_RewardArrayOf[contestId - 1];
         emit ContestCompleted(contestId);
+    }
+
+    function automateResult() private {
+        s_lastTimeStamp = block.timestamp;
+        for (uint256 i = 0; i < s_contests.length; i++) {
+            getResult(i + 1);
+        }
+        // if (s_entrance_fee == 4 ether) {
+        //     s_entrance_fee = 50 ether;
+        // } else {
+        //     s_entrance_fee = 4 ether;
+        // }
     }
 
     function checkUpkeep(
@@ -179,11 +206,9 @@ contract PredictionContract is AutomationCompatibleInterface {
     function performUpkeep(
         bytes memory /* performData */
     ) external override {
-        if ((block.timestamp - s_lastTimeStamp) > i_interval) {
-            s_lastTimeStamp = block.timestamp;
-            for (uint256 i = 0; i < s_contests.length; i++) {
-                getResult(i + 1);
-            }
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if (((block.timestamp - s_lastTimeStamp) > i_interval) && upkeepNeeded) {
+            automateResult();
         }
     }
 
@@ -193,6 +218,10 @@ contract PredictionContract is AutomationCompatibleInterface {
 
     function getNumOfContests() public view returns (uint256) {
         return s_contests.length;
+    }
+
+    function getContests() public view returns (Contest[] memory) {
+        return s_contests;
     }
 
     function getPredictions(uint256 contestId) public view returns (Prediction[] memory) {
@@ -226,11 +255,11 @@ contract PredictionContract is AutomationCompatibleInterface {
         return (price, decimal);
     }
 
-    function getDistributionAmount(uint256 contestId) public view returns (uint256) {
-        return (s_PredictionsOf[contestId - 1].length * i_entranceFee * 8) / 10;
-    }
-
     function getWinners(uint256 contestId) public view returns (address[] memory) {
         return s_WinnersOf[contestId - 1];
+    }
+
+    function getNumOfMaxPlayers() public view returns (uint256) {
+        return s_max_players;
     }
 }

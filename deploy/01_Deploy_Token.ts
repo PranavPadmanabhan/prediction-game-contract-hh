@@ -1,6 +1,6 @@
 import { network } from "hardhat"
 import { DeployFunction } from "hardhat-deploy/types"
-import { verify } from "../helper-functions"
+import { updateTokenABI, updateTokenAddresses, verify } from "../helper-functions"
 import { developmentChains } from "../helper-hardhat-config"
 
 const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments }) => {
@@ -18,10 +18,14 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
 
     log(" deployed Token successfully")
     log("-------------------------------")
+    updateTokenABI(token.abi)
+    updateTokenAddresses(token)
 
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         log("Verifying...")
         await verify(token.address, args)
+        updateTokenABI(token.abi)
+        updateTokenAddresses(token)
     }
 }
 

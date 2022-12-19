@@ -13,6 +13,7 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
           let entranceFee: any
           let deployer: any
           let accounts: Array<any>
+          let interval: any
           beforeEach(async () => {
               deployer = (await getNamedAccounts()).deployer
               accounts = await ethers.getSigners()
@@ -21,20 +22,23 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
               mockV3Aggregator = await ethers.getContract("MockV3Aggregator", deployer)
               Token = await ethers.getContract("Token", deployer)
               entranceFee = ethers.utils.parseEther("1")
+              interval = await predictionContract.getInterval()
           })
           describe("predict", async () => {
               beforeEach(async () => {
-                  await Token.mint()
-                  await Token.approve(predictionContract.address, entranceFee)
-                  Token.allowance(predictionContract.address, accounts[0].address)
-                  await predictionContract.predict(1, 1999)
+                  //   await Token.mint()
+                  //   await Token.approve(predictionContract.address, entranceFee)
+                  //   Token.allowance(predictionContract.address, accounts[0].address)
+                  await predictionContract.predict(1, 1999, { value: entranceFee })
               })
               it("should add details correctly", async () => {
                   const predictions = await predictionContract.getPredictions(1)
                   assert.equal(predictions[0]["predictedValue"].toString(), "1999")
                   assert.equal(predictions[0]["user"], deployer)
                   assert.equal(predictions[0]["difference"].toString(), "0")
-                  assert.equal(predictions[0]["amount"].toString(), entranceFee)
+                  assert.equal(predictions[0]["amount"].toString(), entranceFee.toString())
+                  //   console.log(predictions[0]["amount"].toString())
+                  //   console.log(entranceFee.toString())
               })
           })
 
@@ -42,36 +46,49 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
               describe("set difference, if players less than 2", async () => {
                   beforeEach(async () => {
                       for (let i = 1; i < 2; i++) {
-                          await Token.connect(accounts[i]).mint()
-                          await Token.connect(accounts[i]).approve(
-                              predictionContract.address,
-                              entranceFee
-                          )
-                          await Token.allowance(predictionContract.address, accounts[i].address)
-                          await predictionContract.connect(accounts[i]).predict(1, 1998 + i)
+                          //   await Token.connect(accounts[i]).mint()
+                          //   await Token.connect(accounts[i]).approve(
+                          //       predictionContract.address,
+                          //       entranceFee
+                          //   )
+                          //   await Token.allowance(predictionContract.address, accounts[i].address)
+                          await predictionContract
+                              .connect(accounts[i])
+                              .predict(1, 1998 + i, { value: entranceFee })
                       }
                   })
                   it("should not work if players is less than 2", async () => {
-                      const Contractbalance = await Token.balanceOf(predictionContract.address)
-                      const transactionResponse = await predictionContract.setDifference(1)
-                      await transactionResponse.wait(1)
-                      const updatedBalance = await Token.balanceOf(predictionContract.address)
-                      const predictions = await predictionContract.getPredictions(1)
-                      assert.equal(
-                          Contractbalance.toString(),
-                          (predictions.length * entranceFee).toString()
+                      //   const Contractbalance = await Token.balanceOf(predictionContract.address)
+                      const Contractbalance = await predictionContract.provider.getBalance(
+                          predictionContract.address
                       )
+                      await network.provider.send("evm_increaseTime", [interval.toNumber() + 3])
+                      await network.provider.send("evm_mine", [])
+                      const tx = await predictionContract.performUpkeep([])
+                      await tx.wait(1)
+                      //   const updatedBalance = await Token.balanceOf(predictionContract.address)
+                      const updatedBalance = await predictionContract.provider.getBalance(
+                          predictionContract.address
+                      )
+                      const predictions = await predictionContract.getPredictions(1)
                       assert.equal(updatedBalance.toString(), "0")
+                      //   console.log(Contractbalance.toString())
                   })
                   it("should refund tokens to players successfully", async () => {
-                      const balance = await Token.balanceOf(accounts[1].address)
-                      const transactionResponse = await predictionContract.setDifference(1)
-                      await transactionResponse.wait(1)
-                      const finalBalance = await Token.balanceOf(accounts[1].address)
+                      //   const balance = await Token.balanceOf(accounts[1].address)
+                      const balance = await accounts[1].getBalance()
+                      await network.provider.send("evm_increaseTime", [interval.toNumber() + 3])
+                      await network.provider.send("evm_mine", [])
+                      const tx = await predictionContract.performUpkeep([])
+                      await tx.wait(1)
+                      //   const finalBalance = await Token.balanceOf(accounts[1].address)
+                      const finalBalance = await accounts[1].getBalance()
                       assert.equal(finalBalance.toString(), balance.add(entranceFee).toString())
                   })
                   it("should emit event ContestCancelled", async () => {
-                      await expect(predictionContract.setDifference(1)).to.emit(
+                      await network.provider.send("evm_increaseTime", [interval.toNumber() + 3])
+                      await network.provider.send("evm_mine", [])
+                      await expect(predictionContract.performUpkeep([])).to.emit(
                           predictionContract,
                           "ContestCancelled"
                       )
@@ -80,18 +97,23 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
               describe("should work exactly if there are required players", async () => {
                   beforeEach(async () => {
                       for (let i = 1; i < accounts.length; i++) {
-                          await Token.connect(accounts[i]).mint()
-                          await Token.connect(accounts[i]).approve(
-                              predictionContract.address,
-                              entranceFee
-                          )
-                          await Token.allowance(predictionContract.address, accounts[i].address)
-                          await predictionContract.connect(accounts[i]).predict(1, 1990 + i)
+                          //   await Token.connect(accounts[i]).mint()
+                          //   await Token.connect(accounts[i]).approve(
+                          //       predictionContract.address,
+                          //       entranceFee
+                          //   )
+                          //   await Token.allowance(predictionContract.address, accounts[i].address)
+                          await predictionContract
+                              .connect(accounts[i])
+                              .predict(1, 1990 + i, { value: entranceFee })
                       }
                   })
 
                   it("should set the reward array correctly", async () => {
-                      await predictionContract.setDifference(1)
+                      await network.provider.send("evm_increaseTime", [interval.toNumber() + 3])
+                      await network.provider.send("evm_mine", [])
+                      const tx = await predictionContract.performUpkeep([])
+                      await tx.wait(1)
                       const predictions = await predictionContract.getPredictions(1)
                       const rewardArray = await predictionContract.getRewardArray(1)
                       assert.equal(rewardArray.length, predictions.length)
@@ -103,16 +125,25 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
                       }
                   })
                   it("should update the difference", async () => {
-                      await predictionContract.setDifference(1)
+                      await network.provider.send("evm_increaseTime", [interval.toNumber() + 3])
+                      await network.provider.send("evm_mine", [])
+                      const tx = await predictionContract.performUpkeep([])
+                      await tx.wait(1)
                       const predictions = await predictionContract.getPredictions(1)
                       predictions.map(({ difference }) => {
                           assert(parseInt(difference.toString()) >= 0)
                       })
                   })
-                  it("check", async () => {
-                      await predictionContract.setDifference(1)
-                      const tx = await predictionContract.getResult(1)
-                      await tx.wait(1)
+                  it("check ", async () => {
+                      //   const predictions = await predictionContract.getPredictions(1)
+                      //   predictions.map((i) => console.log(i["predictedValue"].toString()))
+                      await network.provider.send("evm_increaseTime", [interval.toNumber() + 3])
+                      await network.provider.send("evm_mine", [])
+                      const tx = await predictionContract.performUpkeep([])
+                      const receipt = await tx.wait(1)
+                      const { gasUsed } = receipt
+                      const predictions1 = await predictionContract.getPredictions(1)
+                      //   console.log(gasUsed.toString())
                       const winners = await predictionContract.getWinners(1)
                       const rewards = await predictionContract.getRewardArray(1)
                       console.log("Rewards")
