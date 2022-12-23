@@ -4,11 +4,34 @@ import {
     networkConfig,
     developmentChains,
     VERIFICATION_BLOCK_CONFIRMATIONS,
+    rewardArray2,
 } from "../helper-hardhat-config"
 import { updateABI, updateContractAddresses, verify } from "../helper-functions"
 
-const fee = ethers.utils.parseEther("1")
-const interval = 600
+const fee = ethers.utils.parseEther("0.05")
+const interval = 900
+let rewardList1: any[] = []
+
+function setReward() {
+    for (let i = 0; i < 100; i++) {
+        // rewardList1.push(ethers.utils.parseEther(rewardArray1[i].toString()))
+        if (i < 3) {
+            rewardList1.push(ethers.utils.parseEther(rewardArray2[i].toString()))
+        } else if (i >= 3 && i < 6) {
+            rewardList1.push(ethers.utils.parseEther(rewardArray2[3].toString()))
+        } else if (i >= 7 && i < 10) {
+            rewardList1.push(ethers.utils.parseEther(rewardArray2[4].toString()))
+        } else if (i >= 10 && i < 15) {
+            rewardList1.push(ethers.utils.parseEther(rewardArray2[5].toString()))
+        } else if (i >= 16 && i < 25) {
+            rewardList1.push(ethers.utils.parseEther(rewardArray2[6].toString()))
+        } else if (i >= 26 && i < 50) {
+            rewardList1.push(ethers.utils.parseEther(rewardArray2[7].toString()))
+        } else {
+            rewardList1.push(ethers.utils.parseEther(rewardArray2[8].toString()))
+        }
+    }
+}
 
 const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments }) => {
     const { deploy, log } = deployments
@@ -22,7 +45,16 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
 
     if (chainId === 31337) {
         const EthUsdAggregator = await deployments.get("MockV3Aggregator")
-        ethUsdPriceFeedAddresses = [EthUsdAggregator.address]
+        ethUsdPriceFeedAddresses = [
+            EthUsdAggregator.address,
+            EthUsdAggregator.address,
+            EthUsdAggregator.address,
+            EthUsdAggregator.address,
+            EthUsdAggregator.address,
+            EthUsdAggregator.address,
+            EthUsdAggregator.address,
+            EthUsdAggregator.address,
+        ]
     } else {
         ethUsdPriceFeedAddresses = networkConfig[chainId].ethUsdPriceFeed
     }
@@ -34,7 +66,7 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
         : VERIFICATION_BLOCK_CONFIRMATIONS
     log(`----------------------------------------------------`)
 
-    const args = [ethUsdPriceFeedAddresses, fee, interval]
+    const args = [ethUsdPriceFeedAddresses, fee, interval, rewardList1]
 
     const predictionContract = await deploy("PredictionContract", {
         from: deployer,

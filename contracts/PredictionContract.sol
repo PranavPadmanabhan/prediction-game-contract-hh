@@ -33,18 +33,17 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     // STATE VARIABLES
+
     Contest[] private s_contests;
     uint256 private s_lastTimeStamp;
     address[] private s_priceFeedAddresses;
     uint256 private immutable i_entranceFee;
     uint256 private immutable i_interval;
     mapping(uint256 => Prediction[]) private s_PredictionsOf;
-    mapping(uint256 => uint256[]) private s_RewardArrayOf;
     mapping(uint256 => address[]) private s_WinnersOf;
-    // IERC20 Token;
-    // address private s_tokenAddress;
     uint256 private s_max_players = 100;
-    // uint256 private s_entrance_fee = 4 ether;
+    Prediction private temp;
+    uint256[] private s_rewards;
 
     // EVENTS
 
@@ -62,14 +61,14 @@ contract PredictionContract is AutomationCompatibleInterface {
     constructor(
         address[] memory addresses,
         uint256 entranceFee,
-        uint256 interval // address _s_tokenAddress
+        uint256 interval,
+        uint256[] memory rewards
     ) {
         s_lastTimeStamp = block.timestamp;
         i_entranceFee = entranceFee;
         s_priceFeedAddresses = addresses;
         i_interval = interval;
-        // Token = IERC20(_s_tokenAddress);
-        // s_tokenAddress = _s_tokenAddress;
+        s_rewards = rewards;
         createContest();
     }
 
@@ -80,39 +79,26 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     function predict(uint256 contestId, int256 _predictedValue) public payable {
+        (, uint8 decimal) = PriceFeed.getUSDPrice(
+            AggregatorV3Interface(s_contests[contestId - 1].priceFeedAddress)
+        );
         if (s_PredictionsOf[contestId - 1].length > s_max_players) {
             revert Prediction__Limit_Exceeded();
         }
-        // if (Token.balanceOf(msg.sender) < 1) {
-        //     revert Prediction__Not_Enough_Amount();
-        // }
+
         if (msg.value != i_entranceFee) {
             revert Prediction__Not_Enough_Amount();
         }
-        // Token.transferFrom(msg.sender, address(this), 4 ether);
+        int256 predictedValue = _predictedValue * int256(10**decimal);
         s_PredictionsOf[contestId - 1].push(
-            Prediction(_predictedValue, block.timestamp, 0, msg.sender, i_entranceFee)
+            Prediction(predictedValue, block.timestamp, 0, msg.sender, i_entranceFee)
         );
         emit NewPrediction(_predictedValue, block.timestamp, 0, msg.sender);
     }
 
-    function setRewardArray(uint256 contestId) public {
-        uint256 amountForDistribution = (address(this).balance * 8) / 10;
-        for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
-            if (i == 0) {
-                s_RewardArrayOf[contestId - 1].push((amountForDistribution * 5) / 10);
-            } else {
-                s_RewardArrayOf[contestId - 1].push(
-                    (s_RewardArrayOf[contestId - 1][i - 1] * 5) / 10
-                );
-            }
-        }
-    }
-
-    function setDifference(uint256 contestId) public payable {
-        if (s_PredictionsOf[contestId - 1].length < 5) {
-            for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
-                // Token.transfer(s_PredictionsOf[contestId - 1][i].user, 4 ether);
+    function refund(uint256 contestId, uint256 length) public payable {
+        for (uint256 i = 0; i < length; i++) {
+            if (length < 5) {
                 (bool success, ) = payable(s_PredictionsOf[contestId - 1][i].user).call{
                     value: i_entranceFee
                 }("");
@@ -120,73 +106,63 @@ contract PredictionContract is AutomationCompatibleInterface {
                     revert Prediction__Refund_Error();
                 }
             }
-            delete s_PredictionsOf[contestId - 1];
-            delete s_RewardArrayOf[contestId - 1];
-            emit ContestCancelled(contestId);
         }
-        (int256 price, uint8 decimal) = PriceFeed.getUSDPrice(
-            AggregatorV3Interface(s_contests[contestId - 1].priceFeedAddress)
-        ); /*AggregatorV3Interface(s_contests[contestId - 1].priceFeedAddress)*/
-        setRewardArray(contestId);
+        delete s_PredictionsOf[contestId - 1];
+        emit ContestCancelled(contestId);
         delete s_WinnersOf[contestId - 1];
-        for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
-            int256 value = int256(s_PredictionsOf[contestId - 1][i].predictedValue) *
-                int256(10**decimal);
-            if (value < price) {
-                s_PredictionsOf[contestId - 1][i].difference = uint256(price - value);
-            } else {
-                s_PredictionsOf[contestId - 1][i].difference = uint256(value - price);
-            }
-        }
     }
 
-    function getResult(uint256 contestId) public payable {
-        setDifference(contestId);
-        Prediction memory data;
-        for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
-            for (uint256 j = 0; j < s_PredictionsOf[contestId - 1].length - i - 1; j++) {
-                if (
-                    s_PredictionsOf[contestId - 1][j].difference >
-                    s_PredictionsOf[contestId - 1][j + 1].difference ||
-                    (s_PredictionsOf[contestId - 1][j].difference ==
-                        s_PredictionsOf[contestId - 1][j + 1].difference &&
-                        s_PredictionsOf[contestId - 1][j].predictedAt >
-                        s_PredictionsOf[contestId - 1][j + 1].predictedAt)
-                ) {
-                    data = s_PredictionsOf[contestId - 1][j];
-                    s_PredictionsOf[contestId - 1][j] = s_PredictionsOf[contestId - 1][j + 1];
-                    s_PredictionsOf[contestId - 1][j + 1] = data;
-                }
-            }
-        }
-        for (uint256 i = 0; i < s_PredictionsOf[contestId - 1].length; i++) {
-            s_WinnersOf[contestId - 1].push(s_PredictionsOf[contestId - 1][i].user);
-            // Token.transfer(
-            //     s_PredictionsOf[contestId - 1][i].user,
-            //     s_RewardArrayOf[contestId - 1][i]
-            // );
-            (bool success, ) = payable(s_PredictionsOf[contestId - 1][i].user).call{
-                value: s_RewardArrayOf[contestId - 1][i]
-            }("");
+    function getResult(uint256 contestId) public payable returns (Prediction[] memory) {
+        refund(contestId, s_PredictionsOf[contestId - 1].length);
+        Prediction[] memory predictions = sort(
+            updateDifference(
+                s_PredictionsOf[contestId - 1],
+                s_contests[contestId - 1].priceFeedAddress
+            )
+        );
+        for (uint256 i = 0; i < s_rewards.length; i++) {
+            s_WinnersOf[contestId - 1].push(predictions[i].user);
+            (bool success, ) = payable(predictions[i].user).call{value: s_rewards[i]}("");
             if (!success) {
                 revert Prediction__Reward_Failed();
             }
         }
         delete s_PredictionsOf[contestId - 1];
-        delete s_RewardArrayOf[contestId - 1];
         emit ContestCompleted(contestId);
+        return predictions;
     }
 
-    function automateResult() private {
-        s_lastTimeStamp = block.timestamp;
-        for (uint256 i = 0; i < s_contests.length; i++) {
-            getResult(i + 1);
+    function updateDifference(Prediction[] memory predictions, address priceFeed)
+        public
+        view
+        returns (Prediction[] memory)
+    {
+        (int256 price, ) = PriceFeed.getUSDPrice(AggregatorV3Interface(priceFeed));
+        for (uint256 i = 0; i < predictions.length; i++) {
+            int256 value = predictions[i].predictedValue;
+            value < price
+                ? predictions[i].difference = uint256(price - value)
+                : predictions[i].difference = uint256(value - price);
         }
-        // if (s_entrance_fee == 4 ether) {
-        //     s_entrance_fee = 50 ether;
-        // } else {
-        //     s_entrance_fee = 4 ether;
-        // }
+        return predictions;
+    }
+
+    function sort(Prediction[] memory predictions) public pure returns (Prediction[] memory) {
+        Prediction memory tdata;
+        for (uint256 i = 0; i < predictions.length; i++) {
+            for (uint256 j = 0; j < predictions.length - i - 1; j++) {
+                if (
+                    predictions[j].difference > predictions[j + 1].difference ||
+                    (predictions[j].difference == predictions[j + 1].difference &&
+                        predictions[j].predictedAt > predictions[j + 1].predictedAt)
+                ) {
+                    tdata = predictions[j];
+                    predictions[j] = predictions[j + 1];
+                    predictions[j + 1] = tdata;
+                }
+            }
+        }
+        return predictions;
     }
 
     function checkUpkeep(
@@ -207,8 +183,11 @@ contract PredictionContract is AutomationCompatibleInterface {
         bytes memory /* performData */
     ) external override {
         (bool upkeepNeeded, ) = checkUpkeep("");
-        if (((block.timestamp - s_lastTimeStamp) > i_interval) && upkeepNeeded) {
-            automateResult();
+        if (upkeepNeeded) {
+            s_lastTimeStamp = block.timestamp;
+            for (uint256 i = 0; i < s_contests.length; i++) {
+                getResult(i + 1);
+            }
         }
     }
 
@@ -238,10 +217,6 @@ contract PredictionContract is AutomationCompatibleInterface {
 
     function getEntranceFee() public view returns (uint256) {
         return i_entranceFee;
-    }
-
-    function getRewardArray(uint256 contestId) public view returns (uint256[] memory) {
-        return s_RewardArrayOf[contestId - 1];
     }
 
     function getTotalBalance(uint256 contestId) public view returns (uint256) {

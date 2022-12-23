@@ -80,3 +80,4 @@ export const networkConfig: NetworkConfigMap = {
 
 export const developmentChains: string[] = ["hardhat", "localhost"]
 export const VERIFICATION_BLOCK_CONFIRMATIONS = 6
+export const rewardArray2 = [0.5, 0.25, 0.1, 0.085, 0.0625, 0.05, 0.015, 0.01, 0.005]
