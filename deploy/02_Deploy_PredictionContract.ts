@@ -10,7 +10,7 @@ import {
 import { updateABI, updateContractAddresses, verify } from "../helper-functions"
 
 const fee = ethers.utils.parseEther("0.05")
-const interval = 600
+const interval = 900
 let rewardList1: any[] = []
 
 function setReward() {

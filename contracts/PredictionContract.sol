@@ -42,8 +42,6 @@ contract PredictionContract is AutomationCompatibleInterface {
     uint256 private immutable i_interval;
     mapping(uint256 => Prediction[]) private s_PredictionsOf;
     mapping(uint256 => address[]) private s_WinnersOf;
-    mapping(address => uint256) private s_rewardsOf;
-    mapping(address => uint256) private s_refundOf;
     mapping(address => uint256) private s_walletOf;
     uint256 private s_max_players = 25;
     Prediction private temp;
@@ -246,14 +244,6 @@ contract PredictionContract is AutomationCompatibleInterface {
 
     function getNumOfMaxPlayers() public view returns (uint256) {
         return s_max_players;
-    }
-
-    function getRewardOf(address _address) public view returns (uint256) {
-        return s_rewardsOf[_address];
-    }
-
-    function getRefundOf(address _address) public view returns (uint256) {
-        return s_refundOf[_address];
     }
 
     function getOwner() public view returns (address) {
