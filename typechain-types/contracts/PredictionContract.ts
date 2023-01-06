@@ -65,9 +65,11 @@ export declare namespace PredictionContract {
 export interface PredictionContractInterface extends utils.Interface {
   functions: {
     "addFunds()": FunctionFragment;
+    "automateResult(address[],uint256[],uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "checkUpkeep(bytes)": FunctionFragment;
     "getContest(uint256)": FunctionFragment;
+    "getContestPlayers(uint256)": FunctionFragment;
     "getContests()": FunctionFragment;
     "getEntranceFee()": FunctionFragment;
     "getInterval()": FunctionFragment;
@@ -77,26 +79,21 @@ export interface PredictionContractInterface extends utils.Interface {
     "getNumOfMaxPlayers()": FunctionFragment;
     "getOwner()": FunctionFragment;
     "getPredictions(uint256)": FunctionFragment;
-    "getRefundOf(address)": FunctionFragment;
-    "getResult(uint256)": FunctionFragment;
-    "getRewardOf(address)": FunctionFragment;
-    "getSortedArray(uint256)": FunctionFragment;
     "getTotalBalance(uint256)": FunctionFragment;
     "getWinners(uint256)": FunctionFragment;
     "performUpkeep(bytes)": FunctionFragment;
     "predict(uint256,int256)": FunctionFragment;
-    "refundScheme(uint256,uint256)": FunctionFragment;
-    "sort(uint256)": FunctionFragment;
-    "updateDifference(uint256)": FunctionFragment;
     "withdraw(uint256)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
       | "addFunds"
+      | "automateResult"
       | "balanceOf"
       | "checkUpkeep"
       | "getContest"
+      | "getContestPlayers"
       | "getContests"
       | "getEntranceFee"
       | "getInterval"
@@ -106,21 +103,22 @@ export interface PredictionContractInterface extends utils.Interface {
       | "getNumOfMaxPlayers"
       | "getOwner"
       | "getPredictions"
-      | "getRefundOf"
-      | "getResult"
-      | "getRewardOf"
-      | "getSortedArray"
       | "getTotalBalance"
       | "getWinners"
       | "performUpkeep"
       | "predict"
-      | "refundScheme"
-      | "sort"
-      | "updateDifference"
       | "withdraw"
   ): FunctionFragment;
 
   encodeFunctionData(functionFragment: "addFunds", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "automateResult",
+    values: [
+      PromiseOrValue<string>[],
+      PromiseOrValue<BigNumberish>[],
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
   encodeFunctionData(
     functionFragment: "balanceOf",
     values: [PromiseOrValue<string>]
@@ -131,6 +129,10 @@ export interface PredictionContractInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getContest",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getContestPlayers",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -167,22 +169,6 @@ export interface PredictionContractInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getRefundOf",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getResult",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRewardOf",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getSortedArray",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "getTotalBalance",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
@@ -199,29 +185,25 @@ export interface PredictionContractInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "refundScheme",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "sort",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "updateDifference",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "withdraw",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
 
   decodeFunctionResult(functionFragment: "addFunds", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "automateResult",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "checkUpkeep",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getContest", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getContestPlayers",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getContests",
     data: BytesLike
@@ -256,19 +238,6 @@ export interface PredictionContractInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getRefundOf",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "getResult", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getRewardOf",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getSortedArray",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "getTotalBalance",
     data: BytesLike
   ): Result;
@@ -278,21 +247,13 @@ export interface PredictionContractInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "predict", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "refundScheme",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "sort", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "updateDifference",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
     "ContestCancelled(uint256)": EventFragment;
     "ContestCompleted(uint256)": EventFragment;
-    "NewPrediction(int256,uint256,uint256,address)": EventFragment;
+    "NewPrediction(int256,uint256,uint256,address,uint256)": EventFragment;
+    "ResultAnnounced()": EventFragment;
     "TopUpSuccessfull(uint256,address)": EventFragment;
     "WithdrawSuccessfull(uint256,address)": EventFragment;
   };
@@ -300,6 +261,7 @@ export interface PredictionContractInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "ContestCancelled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ContestCompleted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "NewPrediction"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ResultAnnounced"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "TopUpSuccessfull"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "WithdrawSuccessfull"): EventFragment;
 }
@@ -331,13 +293,19 @@ export interface NewPredictionEventObject {
   predictedAt: BigNumber;
   difference: BigNumber;
   user: string;
+  contestId: BigNumber;
 }
 export type NewPredictionEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber, string],
+  [BigNumber, BigNumber, BigNumber, string, BigNumber],
   NewPredictionEventObject
 >;
 
 export type NewPredictionEventFilter = TypedEventFilter<NewPredictionEvent>;
+
+export interface ResultAnnouncedEventObject {}
+export type ResultAnnouncedEvent = TypedEvent<[], ResultAnnouncedEventObject>;
+
+export type ResultAnnouncedEventFilter = TypedEventFilter<ResultAnnouncedEvent>;
 
 export interface TopUpSuccessfullEventObject {
   amount: BigNumber;
@@ -394,6 +362,13 @@ export interface PredictionContract extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    automateResult(
+      addresses: PromiseOrValue<string>[],
+      rewards: PromiseOrValue<BigNumberish>[],
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     balanceOf(
       _address: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -408,6 +383,11 @@ export interface PredictionContract extends BaseContract {
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[PredictionContract.ContestStructOutput]>;
+
+    getContestPlayers(
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     getContests(
       overrides?: CallOverrides
@@ -435,26 +415,6 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[PredictionContract.PredictionStructOutput[]]>;
 
-    getRefundOf(
-      _address: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    getResult(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    getRewardOf(
-      _address: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    getSortedArray(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[PredictionContract.PredictionStructOutput[]]>;
-
     getTotalBalance(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -463,7 +423,7 @@ export interface PredictionContract extends BaseContract {
     getWinners(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<[string[]]>;
+    ): Promise<[PredictionContract.PredictionStructOutput[]]>;
 
     performUpkeep(
       arg0: PromiseOrValue<BytesLike>,
@@ -476,22 +436,6 @@ export interface PredictionContract extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    refundScheme(
-      contestId: PromiseOrValue<BigNumberish>,
-      length: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    sort(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[PredictionContract.PredictionStructOutput[]]>;
-
-    updateDifference(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[PredictionContract.PredictionStructOutput[]]>;
-
     withdraw(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -500,6 +444,13 @@ export interface PredictionContract extends BaseContract {
 
   addFunds(
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  automateResult(
+    addresses: PromiseOrValue<string>[],
+    rewards: PromiseOrValue<BigNumberish>[],
+    contestId: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   balanceOf(
@@ -516,6 +467,11 @@ export interface PredictionContract extends BaseContract {
     contestId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<PredictionContract.ContestStructOutput>;
+
+  getContestPlayers(
+    contestId: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   getContests(
     overrides?: CallOverrides
@@ -543,26 +499,6 @@ export interface PredictionContract extends BaseContract {
     overrides?: CallOverrides
   ): Promise<PredictionContract.PredictionStructOutput[]>;
 
-  getRefundOf(
-    _address: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getResult(
-    contestId: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getRewardOf(
-    _address: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getSortedArray(
-    contestId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<PredictionContract.PredictionStructOutput[]>;
-
   getTotalBalance(
     contestId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
@@ -571,7 +507,7 @@ export interface PredictionContract extends BaseContract {
   getWinners(
     contestId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<string[]>;
+  ): Promise<PredictionContract.PredictionStructOutput[]>;
 
   performUpkeep(
     arg0: PromiseOrValue<BytesLike>,
@@ -584,22 +520,6 @@ export interface PredictionContract extends BaseContract {
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  refundScheme(
-    contestId: PromiseOrValue<BigNumberish>,
-    length: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  sort(
-    contestId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<PredictionContract.PredictionStructOutput[]>;
-
-  updateDifference(
-    contestId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<PredictionContract.PredictionStructOutput[]>;
-
   withdraw(
     amount: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -607,6 +527,13 @@ export interface PredictionContract extends BaseContract {
 
   callStatic: {
     addFunds(overrides?: CallOverrides): Promise<void>;
+
+    automateResult(
+      addresses: PromiseOrValue<string>[],
+      rewards: PromiseOrValue<BigNumberish>[],
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     balanceOf(
       _address: PromiseOrValue<string>,
@@ -622,6 +549,11 @@ export interface PredictionContract extends BaseContract {
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PredictionContract.ContestStructOutput>;
+
+    getContestPlayers(
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getContests(
       overrides?: CallOverrides
@@ -649,26 +581,6 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PredictionContract.PredictionStructOutput[]>;
 
-    getRefundOf(
-      _address: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getResult(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PredictionContract.PredictionStructOutput[]>;
-
-    getRewardOf(
-      _address: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getSortedArray(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PredictionContract.PredictionStructOutput[]>;
-
     getTotalBalance(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -677,7 +589,7 @@ export interface PredictionContract extends BaseContract {
     getWinners(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<string[]>;
+    ): Promise<PredictionContract.PredictionStructOutput[]>;
 
     performUpkeep(
       arg0: PromiseOrValue<BytesLike>,
@@ -689,22 +601,6 @@ export interface PredictionContract extends BaseContract {
       _predictedValue: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    refundScheme(
-      contestId: PromiseOrValue<BigNumberish>,
-      length: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    sort(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PredictionContract.PredictionStructOutput[]>;
-
-    updateDifference(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PredictionContract.PredictionStructOutput[]>;
 
     withdraw(
       amount: PromiseOrValue<BigNumberish>,
@@ -719,18 +615,23 @@ export interface PredictionContract extends BaseContract {
     "ContestCompleted(uint256)"(contestId?: null): ContestCompletedEventFilter;
     ContestCompleted(contestId?: null): ContestCompletedEventFilter;
 
-    "NewPrediction(int256,uint256,uint256,address)"(
+    "NewPrediction(int256,uint256,uint256,address,uint256)"(
       predictedValue?: null,
       predictedAt?: null,
       difference?: null,
-      user?: null
+      user?: null,
+      contestId?: null
     ): NewPredictionEventFilter;
     NewPrediction(
       predictedValue?: null,
       predictedAt?: null,
       difference?: null,
-      user?: null
+      user?: null,
+      contestId?: null
     ): NewPredictionEventFilter;
+
+    "ResultAnnounced()"(): ResultAnnouncedEventFilter;
+    ResultAnnounced(): ResultAnnouncedEventFilter;
 
     "TopUpSuccessfull(uint256,address)"(
       amount?: null,
@@ -753,6 +654,13 @@ export interface PredictionContract extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    automateResult(
+      addresses: PromiseOrValue<string>[],
+      rewards: PromiseOrValue<BigNumberish>[],
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     balanceOf(
       _address: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -764,6 +672,11 @@ export interface PredictionContract extends BaseContract {
     ): Promise<BigNumber>;
 
     getContest(
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getContestPlayers(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -792,26 +705,6 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getRefundOf(
-      _address: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getResult(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getRewardOf(
-      _address: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getSortedArray(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     getTotalBalance(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -833,22 +726,6 @@ export interface PredictionContract extends BaseContract {
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    refundScheme(
-      contestId: PromiseOrValue<BigNumberish>,
-      length: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    sort(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    updateDifference(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     withdraw(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -858,6 +735,13 @@ export interface PredictionContract extends BaseContract {
   populateTransaction: {
     addFunds(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    automateResult(
+      addresses: PromiseOrValue<string>[],
+      rewards: PromiseOrValue<BigNumberish>[],
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     balanceOf(
@@ -871,6 +755,11 @@ export interface PredictionContract extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getContest(
+      contestId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getContestPlayers(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -903,26 +792,6 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getRefundOf(
-      _address: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getResult(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getRewardOf(
-      _address: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getSortedArray(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     getTotalBalance(
       contestId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -942,22 +811,6 @@ export interface PredictionContract extends BaseContract {
       contestId: PromiseOrValue<BigNumberish>,
       _predictedValue: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    refundScheme(
-      contestId: PromiseOrValue<BigNumberish>,
-      length: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    sort(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    updateDifference(
-      contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     withdraw(

@@ -48,7 +48,7 @@ const config: HardhatUserConfig = {
         customChains: [],
     },
     mocha: {
-        timeout: 500000,
+        timeout: 1500000,
     },
 }
 

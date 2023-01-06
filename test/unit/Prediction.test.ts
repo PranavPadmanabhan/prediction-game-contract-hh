@@ -21,7 +21,7 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
               predictionContract = await ethers.getContract("PredictionContract", deployer)
               mockV3Aggregator = await ethers.getContract("MockV3Aggregator", deployer)
               Token = await ethers.getContract("Token", deployer)
-              entranceFee = ethers.utils.parseEther("0.05")
+              entranceFee = ethers.utils.parseEther("0.0005")
               interval = await predictionContract.getInterval()
           })
           describe("predict", async () => {
@@ -98,47 +98,39 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
                   beforeEach(async () => {
                       await predictionContract
                           .connect(accounts[1])
-                          .addFunds({ value: ethers.utils.parseEther("100") })
-                      for (let i = 1; i < 27; i++) {
+                          .addFunds({ value: ethers.utils.parseEther("1000") })
+                      for (let i = 1; i < 101; i++) {
                           //   for (let j = 0; j < accounts.length; j++) {
-                          await predictionContract
-                              .connect(accounts[1])
-                              .predict(1, 1990 + i, { value: entranceFee })
-                          await predictionContract
-                              .connect(accounts[1])
-                              .predict(2, 1990 + i, { value: entranceFee })
-                          await predictionContract
-                              .connect(accounts[1])
-                              .predict(3, 1990 + i, { value: entranceFee })
-                          await predictionContract
-                              .connect(accounts[1])
-                              .predict(4, 1990 + i, { value: entranceFee })
-                          await predictionContract
-                              .connect(accounts[1])
-                              .predict(5, 1990 + i, { value: entranceFee })
-                          //   await predictionContract
-                          //       .connect(accounts[j])
-                          //       .predict(6, 1990 + i, { value: entranceFee })
-                          //   await predictionContract
-                          //       .connect(accounts[j])
-                          //       .predict(7, 1990 + i, { value: entranceFee })
-                          //   await predictionContract
-                          //       .connect(accounts[j])
-                          //       .predict(8, 1990 + i, { value: entranceFee })
+                          await predictionContract.connect(accounts[1]).predict(1, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(2, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(3, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(4, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(5, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(6, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(7, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(8, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(9, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(10, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(11, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(12, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(13, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(14, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(15, 1990 + i)
                       }
                       //   await predictionContract
                       //       .connect(accounts[2])
-                      //       .predict(2, 1990 + i, { value: entranceFee })
+                      //       .predict(2, 1990 + i)
                       //   await predictionContract
                       //       .connect(accounts[3])
-                      //       .predict(3, 1990 + i, { value: entranceFee })
+                      //       .predict(3, 1990 + i)
                       //   }
                   })
 
                   it("should update the difference", async () => {
                       await network.provider.send("evm_increaseTime", [interval.toNumber() + 3])
                       await network.provider.send("evm_mine", [])
-                      const tx = await predictionContract.performUpkeep([])
+
+                      const tx = await predictionContract.getResult(1)
                       await tx.wait(1)
                       const predictions = await predictionContract.getPredictions(1)
                       console.log(predictions.length)
@@ -154,16 +146,29 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
                       })
                   })
                   it.only("check ", async () => {
-                      //   const predictions = await predictionContract.getPredictions(1)
+                      let array = []
+
+                      for (let i = 0; i < 1000; i++) {
+                          array.push(ethers.utils.parseEther("0.005"))
+                      }
+                      const predictions = await predictionContract.getPredictions(1)
+                      let addresses = predictions.map((item) => item.user.toString())
+
                       //   predictions.map((i) => console.log(i["predictedValue"].toString()))
                       await network.provider.send("evm_increaseTime", [interval.toNumber() + 6])
                       await network.provider.send("evm_mine", [])
                       const predictions1 = await predictionContract.getPredictions(1)
                       console.log(predictions1.length)
-                      const tx = await predictionContract.performUpkeep([])
+                      const tx = await predictionContract.automateResult(addresses, array, 1, {
+                          gasLimit: 10000000,
+                      })
+                      //   const tx = await predictionContract.performUpkeep([])
                       const receipt = await tx.wait(1)
                       const { gasUsed } = receipt
-
+                      const num1 = await predictionContract.getNumOfContests()
+                      console.log(num1.toString())
+                      const num = await predictionContract.getContestPlayers(1)
+                      console.log(num.toString())
                       console.log(`gas Used :  ${gasUsed.toString()}`)
                       const winners = await predictionContract.getWinners(1)
                       console.log("-------------------------------------------------")
