@@ -11,13 +11,9 @@ error Prediction__Not_Enough_Amount();
 error Prediction__TopUp_error();
 error Withdraw__Failed();
 error Prediction_Not_Available();
+error Admin_Withdraw_Failed();
 
 contract PredictionContract is AutomationCompatibleInterface {
-    // create all the contest - done
-    // add predict function for each contest - done
-    // set difference from predicted value - done
-    // set results for each contests
-
     // STRUCTS
 
     struct Contest {
@@ -42,7 +38,7 @@ contract PredictionContract is AutomationCompatibleInterface {
     uint256 private immutable i_entranceFee;
     uint256 private immutable i_interval;
     mapping(uint256 => Prediction[]) private s_PredictionsOf;
-    mapping(uint256 => Prediction[]) private s_WinnersOf;
+    mapping(uint256 => address[]) private s_WinnersOf;
     mapping(address => uint256) private s_walletOf;
     uint256 private s_max_players = 100;
     mapping(uint256 => uint256) private s_playersOf;
@@ -83,7 +79,7 @@ contract PredictionContract is AutomationCompatibleInterface {
         }
     }
 
-    function predict(uint256 contestId, int256 _predictedValue) public payable {
+    function predict(uint256 contestId, int256 _predictedValue) public {
         if (s_PredictionsOf[contestId - 1].length >= (s_max_players + s_playersOf[contestId - 1])) {
             revert Prediction__Limit_Exceeded();
         }
@@ -118,21 +114,20 @@ contract PredictionContract is AutomationCompatibleInterface {
         emit WithdrawSuccessfull(amount, msg.sender);
     }
 
-    function automateResult(
-        address[] memory addresses,
-        uint256[] memory rewards,
-        uint256 contestId
-    ) public {
-        s_playersOf[contestId - 1] = s_PredictionsOf[contestId - 1].length;
-        if (addresses.length < s_max_players) {
-            for (uint256 i = 0; i < addresses.length; i++) {
-                s_walletOf[addresses[i]] += i_entranceFee;
-            }
-        } else {
-            for (uint256 i = 0; i < addresses.length; i++) {
-                s_walletOf[addresses[i]] += rewards[i];
-            }
+    function setReward(address[] memory addresses, uint256[] memory rewards) public {
+        for (uint256 i = 0; i < addresses.length; i++) {
+            s_walletOf[addresses[i]] += rewards[i];
         }
+    }
+
+    function Refund(address[] memory addresses) public {
+        for (uint256 i = 0; i < addresses.length; i++) {
+            s_walletOf[addresses[i]] += i_entranceFee;
+        }
+    }
+
+    function declareCompletetion(uint256 contestId) public {
+        s_playersOf[contestId - 1] = s_PredictionsOf[contestId - 1].length;
         emit ContestCompleted(contestId);
     }
 
@@ -147,14 +142,13 @@ contract PredictionContract is AutomationCompatibleInterface {
             bytes memory /* performData */
         )
     {
-        upkeepNeeded = ((block.timestamp - s_lastTimeStamp) > i_interval);
+        upkeepNeeded = ((block.timestamp - s_lastTimeStamp) >= i_interval);
     }
 
     function performUpkeep(
         bytes memory /* performData */
     ) external override {
-        (bool upkeepNeeded, ) = checkUpkeep("");
-        if (upkeepNeeded) {
+        if ((block.timestamp - s_lastTimeStamp) >= i_interval) {
             s_lastTimeStamp = block.timestamp;
             emit ResultAnnounced();
         }
@@ -188,8 +182,8 @@ contract PredictionContract is AutomationCompatibleInterface {
         return i_entranceFee;
     }
 
-    function getTotalBalance(uint256 contestId) public view returns (uint256) {
-        return s_PredictionsOf[contestId - 1].length * i_entranceFee;
+    function getTotalBalance() public view returns (uint256) {
+        return address(this).balance;
     }
 
     function getLatestPrice(uint256 contestId) public view returns (int256, uint8) {
@@ -199,7 +193,7 @@ contract PredictionContract is AutomationCompatibleInterface {
         return (price, decimal);
     }
 
-    function getWinners(uint256 contestId) public view returns (Prediction[] memory) {
+    function getWinners(uint256 contestId) public view returns (address[] memory) {
         return s_WinnersOf[contestId - 1];
     }
 
