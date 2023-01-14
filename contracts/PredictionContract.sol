@@ -216,7 +216,9 @@ contract PredictionContract is AutomationCompatibleInterface {
      */
 
     function updateWinnerList(address[] memory addresses, uint256 contestId) external onlyAdmin {
-        s_WinnersOf[contestId - 1] = addresses;
+        for (uint256 i = 0; i < addresses.length; i++) {
+            s_WinnersOf[contestId - 1].push(addresses[i]);
+        }
     }
 
     /**
