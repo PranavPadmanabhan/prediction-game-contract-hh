@@ -64,7 +64,6 @@ export declare namespace PredictionContract {
 
 export interface PredictionContractInterface extends utils.Interface {
   functions: {
-    "Refund(address[])": FunctionFragment;
     "addFunds()": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "checkUpkeep(bytes)": FunctionFragment;
@@ -86,11 +85,11 @@ export interface PredictionContractInterface extends utils.Interface {
     "predict(uint256,int256)": FunctionFragment;
     "setReward(address[],uint256[])": FunctionFragment;
     "withdraw(uint256)": FunctionFragment;
+    "withdrawFunds(uint256)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "Refund"
       | "addFunds"
       | "balanceOf"
       | "checkUpkeep"
@@ -112,12 +111,9 @@ export interface PredictionContractInterface extends utils.Interface {
       | "predict"
       | "setReward"
       | "withdraw"
+      | "withdrawFunds"
   ): FunctionFragment;
 
-  encodeFunctionData(
-    functionFragment: "Refund",
-    values: [PromiseOrValue<string>[]]
-  ): string;
   encodeFunctionData(functionFragment: "addFunds", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "balanceOf",
@@ -196,8 +192,11 @@ export interface PredictionContractInterface extends utils.Interface {
     functionFragment: "withdraw",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "withdrawFunds",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
 
-  decodeFunctionResult(functionFragment: "Refund", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "addFunds", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
   decodeFunctionResult(
@@ -258,6 +257,10 @@ export interface PredictionContractInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "predict", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "setReward", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "withdrawFunds",
+    data: BytesLike
+  ): Result;
 
   events: {
     "ContestCancelled(uint256)": EventFragment;
@@ -368,11 +371,6 @@ export interface PredictionContract extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    Refund(
-      addresses: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     addFunds(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -454,14 +452,14 @@ export interface PredictionContract extends BaseContract {
 
     withdraw(
       amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    withdrawFunds(
+      amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
-
-  Refund(
-    addresses: PromiseOrValue<string>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
 
   addFunds(
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
@@ -544,15 +542,15 @@ export interface PredictionContract extends BaseContract {
 
   withdraw(
     amount: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  withdrawFunds(
+    amount: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    Refund(
-      addresses: PromiseOrValue<string>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     addFunds(overrides?: CallOverrides): Promise<void>;
 
     balanceOf(
@@ -634,6 +632,11 @@ export interface PredictionContract extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    withdrawFunds(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
@@ -678,11 +681,6 @@ export interface PredictionContract extends BaseContract {
   };
 
   estimateGas: {
-    Refund(
-      addresses: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     addFunds(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -762,16 +760,16 @@ export interface PredictionContract extends BaseContract {
 
     withdraw(
       amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    withdrawFunds(
+      amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    Refund(
-      addresses: PromiseOrValue<string>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
     addFunds(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
@@ -854,6 +852,11 @@ export interface PredictionContract extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     withdraw(
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    withdrawFunds(
       amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
