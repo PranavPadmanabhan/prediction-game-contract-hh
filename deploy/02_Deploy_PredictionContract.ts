@@ -10,65 +10,15 @@ import {
 } from "../helper-hardhat-config"
 import { updateABI, updateContractAddresses, verify } from "../helper-functions"
 
-const fee = ethers.utils.parseEther("0.0005")
-const interval = 1800
-let rewardList1: any[] = []
-
-function setReward() {
-    // for (let i = 0; i < 100; i++) {
-    //     // rewardList1.push(ethers.utils.parseEther(rewardArray1[i].toString()))
-    //     if (i < 3) {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray2[i].toString()))
-    //     } else if (i >= 3 && i < 6) {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray2[3].toString()))
-    //     } else if (i >= 7 && i < 10) {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray2[4].toString()))
-    //     } else if (i >= 10 && i < 15) {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray2[5].toString()))
-    //     } else if (i >= 16 && i < 25) {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray2[6].toString()))
-    //     } else if (i >= 26 && i < 50) {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray2[7].toString()))
-    //     } else {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray2[8].toString()))
-    //     }
-    // }
-    // for (let i = 0; i < 25; i++) {
-    //     // rewardList1.push(ethers.utils.parseEther(rewardArray1[i].toString()))
-    //     if (i < 3) {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray3[i].toString()))
-    //     } else if (i >= 3 && i < 6) {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray3[3].toString()))
-    //     } else if (i >= 7 && i < 10) {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray3[4].toString()))
-    //     } else {
-    //         rewardList1.push(ethers.utils.parseEther(rewardArray3[5].toString()))
-    //     }
-    // }
-
-    for (let i = 0; i < 100; i++) {
-        // rewardList1.push(ethers.utils.parseEther(rewardArray1[i].toString()))
-        if (i < 3) {
-            rewardList1.push(ethers.utils.parseEther(array[i].toString()))
-        } else if (i >= 3 && i < 6) {
-            rewardList1.push(ethers.utils.parseEther(array[3].toString()))
-        } else if (i >= 7 && i < 10) {
-            rewardList1.push(ethers.utils.parseEther(array[4].toString()))
-        } else if (i >= 10 && i < 15) {
-            rewardList1.push(ethers.utils.parseEther(array[5].toString()))
-        } else if (i >= 16 && i < 25) {
-            rewardList1.push(ethers.utils.parseEther(array[6].toString()))
-        } else if (i >= 26 && i < 50) {
-            rewardList1.push(ethers.utils.parseEther(array[7].toString()))
-        } else {
-            rewardList1.push(ethers.utils.parseEther(array[8].toString()))
-        }
-    }
-}
+const fee1 = ethers.utils.parseEther("0.0005")
+const fee2 = ethers.utils.parseEther("0.00075")
+const fee3 = ethers.utils.parseEther("0.001")
+const interval = 7200
+const feeList = [fee1, fee2, fee3]
+const maxNumOfPlayers = 100
 
 const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments }) => {
     const { deploy, log } = deployments
-    setReward()
     const { deployer } = await getNamedAccounts()
     const chainId: number | undefined = network.config.chainId
     if (!chainId) return
@@ -77,40 +27,7 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
 
     if (chainId === 31337) {
         const EthUsdAggregator = await deployments.get("MockV3Aggregator")
-        ethUsdPriceFeedAddresses = [
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-            EthUsdAggregator.address,
-        ]
+        ethUsdPriceFeedAddresses = [EthUsdAggregator.address, EthUsdAggregator.address]
     } else {
         ethUsdPriceFeedAddresses = networkConfig[chainId].ethUsdPriceFeed
     }
@@ -122,7 +39,7 @@ const deployFunction: DeployFunction = async ({ getNamedAccounts, deployments })
         : VERIFICATION_BLOCK_CONFIRMATIONS
     log(`----------------------------------------------------`)
 
-    const args = [ethUsdPriceFeedAddresses, fee, interval]
+    const args = [ethUsdPriceFeedAddresses, feeList, interval, maxNumOfPlayers]
 
     const predictionContract = await deploy("PredictionContract", {
         from: deployer,

@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./PriceFeed.sol";
 
 error Prediction__Limit_Exceeded();
-error Prediction__Not_Enough_Amount();
+error Prediction__Not_Available();
 error Prediction__TopUp_error();
 error Withdraw__Failed();
 error Prediction_Not_Available();
@@ -19,9 +19,13 @@ contract PredictionContract is AutomationCompatibleInterface {
     struct Contest {
         uint256 id;
         address priceFeedAddress;
+        uint256 entranceFee;
+        uint256 maxPlayers;
+        uint256 numOfPredictions;
     }
 
     struct Prediction {
+        uint256 contestId;
         int256 predictedValue;
         uint256 predictedAt;
         uint256 difference;
@@ -34,9 +38,9 @@ contract PredictionContract is AutomationCompatibleInterface {
 
     address payable private immutable i_owner;
     uint256 private s_lastTimeStamp;
-    uint256 private immutable i_entranceFee;
+    uint256[] private s_entranceFeeList;
     uint256 private immutable i_interval;
-    uint256 private s_max_players = 500;
+    uint256 private s_max_players;
 
     address[] private s_priceFeedAddresses;
     Contest[] private s_contests;
@@ -45,7 +49,6 @@ contract PredictionContract is AutomationCompatibleInterface {
     mapping(uint256 => address[]) private s_WinnersOf;
     mapping(address => uint256) private s_walletOf;
     mapping(uint256 => uint256) private s_playersOf;
-    mapping(address => Prediction[]) private s_predictionsOfUser;
 
     // EVENTS
 
@@ -73,14 +76,16 @@ contract PredictionContract is AutomationCompatibleInterface {
 
     constructor(
         address[] memory addresses,
-        uint256 entranceFee,
-        uint256 interval
+        uint256[] memory entranceFeeList,
+        uint256 interval,
+        uint256 numOfPlayers
     ) {
         s_lastTimeStamp = block.timestamp;
-        i_entranceFee = entranceFee;
+        s_entranceFeeList = entranceFeeList;
         s_priceFeedAddresses = addresses;
         i_interval = interval;
         i_owner = payable(msg.sender);
+        s_max_players = numOfPlayers;
         createContest();
     }
 
@@ -94,7 +99,17 @@ contract PredictionContract is AutomationCompatibleInterface {
 
     function createContest() internal {
         for (uint256 i = 0; i < s_priceFeedAddresses.length; i++) {
-            s_contests.push(Contest(i + 1, s_priceFeedAddresses[i]));
+            for (uint256 j = 0; j < s_entranceFeeList.length; j++) {
+                s_contests.push(
+                    Contest(
+                        s_contests.length + 1,
+                        s_priceFeedAddresses[i],
+                        s_entranceFeeList[j],
+                        s_max_players,
+                        0
+                    )
+                );
+            }
         }
     }
 
@@ -110,34 +125,29 @@ contract PredictionContract is AutomationCompatibleInterface {
      */
 
     function predict(uint256 contestId, int256 _predictedValue) public {
-        if (s_PredictionsOf[contestId - 1].length >= (s_max_players + s_playersOf[contestId - 1])) {
-            revert Prediction__Limit_Exceeded();
+        uint256 fee = s_contests[contestId - 1].entranceFee;
+        if (
+            s_PredictionsOf[contestId - 1].length >= (s_max_players + s_playersOf[contestId - 1]) ||
+            (s_walletOf[msg.sender] < fee) ||
+            ((block.timestamp - s_lastTimeStamp) >= (i_interval - 800))
+        ) {
+            revert Prediction__Not_Available();
         }
-        if (s_walletOf[msg.sender] < i_entranceFee) {
-            revert Prediction__Not_Enough_Amount();
-        }
-
         s_PredictionsOf[contestId - 1].push(
             Prediction(
+                contestId,
                 _predictedValue,
                 block.timestamp,
                 0,
                 msg.sender,
-                i_entranceFee,
+                fee,
                 s_lastTimeStamp + i_interval
             )
         );
-        s_predictionsOfUser[msg.sender].push(
-            Prediction(
-                _predictedValue,
-                block.timestamp,
-                0,
-                msg.sender,
-                i_entranceFee,
-                s_lastTimeStamp + i_interval
-            )
-        );
-        s_walletOf[msg.sender] -= i_entranceFee;
+        s_contests[contestId - 1].numOfPredictions =
+            s_PredictionsOf[contestId - 1].length -
+            s_playersOf[contestId - 1];
+        s_walletOf[msg.sender] -= fee;
         emit NewPrediction(_predictedValue, block.timestamp, 0, msg.sender, contestId);
     }
 
@@ -149,7 +159,7 @@ contract PredictionContract is AutomationCompatibleInterface {
      */
 
     function addFunds() public payable {
-        if (msg.value < i_entranceFee) {
+        if (msg.value < s_entranceFeeList[0]) {
             revert Prediction__TopUp_error();
         }
         s_walletOf[msg.sender] += msg.value;
@@ -166,7 +176,7 @@ contract PredictionContract is AutomationCompatibleInterface {
      */
 
     function withdrawFunds(uint256 amount) public payable {
-        if (amount < i_entranceFee && amount > s_walletOf[msg.sender]) {
+        if (amount < s_entranceFeeList[0] && amount > s_walletOf[msg.sender]) {
             revert Withdraw__Failed();
         }
         (bool success, ) = payable(msg.sender).call{value: amount}("");
@@ -197,12 +207,14 @@ contract PredictionContract is AutomationCompatibleInterface {
      *
      * @dev admin only function that will add refund amount to wallet of all players if there are insufficient amount of players in a contest
      *
+     * @param contestId - id  of a specific contest
      * @param addresses - addresses of all players
      */
 
-    function Refund(address[] memory addresses) external onlyAdmin {
+    function Refund(uint256 contestId, address[] memory addresses) external onlyAdmin {
+        uint256 fee = s_contests[contestId - 1].entranceFee;
         for (uint256 i = 0; i < addresses.length; i++) {
-            s_walletOf[addresses[i]] += i_entranceFee;
+            s_walletOf[addresses[i]] += fee;
         }
     }
 
@@ -250,7 +262,43 @@ contract PredictionContract is AutomationCompatibleInterface {
     }
 
     /**
-     * @notice function which checks the contest time
+     *
+     * @dev function which updates the contest time - admin only
+     *
+     */
+
+    function updateTimeStamp() external onlyAdmin {
+        s_lastTimeStamp = block.timestamp;
+        emit ResultAnnounced();
+    }
+
+    /**
+     *
+     * @dev function which updates the maximum number of player - admin only
+     *
+     * @param length - number to be replaced with current max players
+     *
+     */
+
+    function updateNumoFPlayers(uint256 length) external onlyAdmin {
+        s_max_players = length;
+    }
+
+    /**
+     *
+     * @dev function which add new contest to s_contests array - admin only
+     *
+     * @param priceFeed - priceFeed address of new contest
+     * @param entranceFee - fee for the contest
+     *
+     */
+
+    function addContest(address priceFeed, uint256 entranceFee) external onlyAdmin {
+        s_contests.push(Contest(s_contests.length + 1, priceFeed, entranceFee, s_max_players, 0));
+    }
+
+    /**
+     * @notice function which checks the contest execution time
      *
      * @dev  perform upkeep triggering function return upkeepneeded true when the time passed
      *
@@ -309,8 +357,8 @@ contract PredictionContract is AutomationCompatibleInterface {
         return i_interval;
     }
 
-    function getEntranceFee() public view returns (uint256) {
-        return i_entranceFee;
+    function getEntranceFee(uint256 contestId) public view returns (uint256) {
+        return s_contests[contestId - 1].entranceFee;
     }
 
     function getTotalBalance() public view returns (uint256) {
