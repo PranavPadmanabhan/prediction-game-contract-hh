@@ -99,6 +99,7 @@ export interface PredictionContractInterface extends utils.Interface {
     "getNumOfMaxPlayers()": FunctionFragment;
     "getOwner()": FunctionFragment;
     "getPredictions(uint256)": FunctionFragment;
+    "getPredictionsOfUser(address)": FunctionFragment;
     "getTotalBalance()": FunctionFragment;
     "getWinners(uint256)": FunctionFragment;
     "performUpkeep(bytes)": FunctionFragment;
@@ -107,7 +108,6 @@ export interface PredictionContractInterface extends utils.Interface {
     "updateNumoFPlayers(uint256)": FunctionFragment;
     "updateTimeStamp()": FunctionFragment;
     "updateWinnerList(address[],uint256)": FunctionFragment;
-    "withDrawContractFunds(uint256)": FunctionFragment;
     "withdraw(uint256)": FunctionFragment;
     "withdrawFunds(uint256)": FunctionFragment;
   };
@@ -131,6 +131,7 @@ export interface PredictionContractInterface extends utils.Interface {
       | "getNumOfMaxPlayers"
       | "getOwner"
       | "getPredictions"
+      | "getPredictionsOfUser"
       | "getTotalBalance"
       | "getWinners"
       | "performUpkeep"
@@ -139,7 +140,6 @@ export interface PredictionContractInterface extends utils.Interface {
       | "updateNumoFPlayers"
       | "updateTimeStamp"
       | "updateWinnerList"
-      | "withDrawContractFunds"
       | "withdraw"
       | "withdrawFunds"
   ): FunctionFragment;
@@ -207,6 +207,10 @@ export interface PredictionContractInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "getPredictionsOfUser",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getTotalBalance",
     values?: undefined
   ): string;
@@ -237,10 +241,6 @@ export interface PredictionContractInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "updateWinnerList",
     values: [PromiseOrValue<string>[], PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "withDrawContractFunds",
-    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "withdraw",
@@ -302,6 +302,10 @@ export interface PredictionContractInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "getPredictionsOfUser",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getTotalBalance",
     data: BytesLike
   ): Result;
@@ -322,10 +326,6 @@ export interface PredictionContractInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "updateWinnerList",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "withDrawContractFunds",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
@@ -513,6 +513,11 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[PredictionContract.PredictionStructOutput[]]>;
 
+    getPredictionsOfUser(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[PredictionContract.PredictionStructOutput]>;
+
     getTotalBalance(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     getWinners(
@@ -549,11 +554,6 @@ export interface PredictionContract extends BaseContract {
     updateWinnerList(
       addresses: PromiseOrValue<string>[],
       contestId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    withDrawContractFunds(
-      amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -638,6 +638,11 @@ export interface PredictionContract extends BaseContract {
     overrides?: CallOverrides
   ): Promise<PredictionContract.PredictionStructOutput[]>;
 
+  getPredictionsOfUser(
+    user: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<PredictionContract.PredictionStructOutput>;
+
   getTotalBalance(overrides?: CallOverrides): Promise<BigNumber>;
 
   getWinners(
@@ -674,11 +679,6 @@ export interface PredictionContract extends BaseContract {
   updateWinnerList(
     addresses: PromiseOrValue<string>[],
     contestId: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  withDrawContractFunds(
-    amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -761,6 +761,11 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PredictionContract.PredictionStructOutput[]>;
 
+    getPredictionsOfUser(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PredictionContract.PredictionStructOutput>;
+
     getTotalBalance(overrides?: CallOverrides): Promise<BigNumber>;
 
     getWinners(
@@ -795,11 +800,6 @@ export interface PredictionContract extends BaseContract {
     updateWinnerList(
       addresses: PromiseOrValue<string>[],
       contestId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    withDrawContractFunds(
-      amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -924,6 +924,11 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getPredictionsOfUser(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getTotalBalance(overrides?: CallOverrides): Promise<BigNumber>;
 
     getWinners(
@@ -960,11 +965,6 @@ export interface PredictionContract extends BaseContract {
     updateWinnerList(
       addresses: PromiseOrValue<string>[],
       contestId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    withDrawContractFunds(
-      amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1052,6 +1052,11 @@ export interface PredictionContract extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    getPredictionsOfUser(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getTotalBalance(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     getWinners(
@@ -1088,11 +1093,6 @@ export interface PredictionContract extends BaseContract {
     updateWinnerList(
       addresses: PromiseOrValue<string>[],
       contestId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    withDrawContractFunds(
-      amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

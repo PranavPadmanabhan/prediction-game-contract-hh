@@ -243,6 +243,7 @@ contract PredictionContract is AutomationCompatibleInterface {
 
     function declareCompletetion(uint256 contestId) external onlyAdmin {
         s_playersOf[contestId - 1] = s_PredictionsOf[contestId - 1].length;
+        s_contests[contestId - 1].numOfPredictions = 0;
         emit ContestCompleted(contestId);
     }
 

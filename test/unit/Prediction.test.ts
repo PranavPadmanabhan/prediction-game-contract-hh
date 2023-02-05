@@ -28,12 +28,11 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
               beforeEach(async () => {
                   await predictionContract
                       .connect(accounts[1])
-                      .addFunds({ value: ethers.utils.parseEther("100") })
-                  const tx = await predictionContract
-                      .connect(accounts[1])
-                      .predict(1, 1999, { value: entranceFee })
+                      .addFunds({ value: ethers.utils.parseEther("10") })
+                  const tx = await predictionContract.connect(accounts[1]).predict(1, 1999)
                   const rec = await tx.wait(1)
                   const { gasUsed, effectiveGasPrice } = rec
+                  console.log(gasUsed.toString())
 
                   console.log(
                       `price : ${ethers.utils
@@ -105,11 +104,11 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
                   beforeEach(async () => {
                       await predictionContract
                           .connect(accounts[1])
-                          .addFunds({ value: ethers.utils.parseEther("1000") })
-                      for (let i = 1; i < 501; i++) {
+                          .addFunds({ value: ethers.utils.parseEther("100") })
+                      for (let i = 1; i < 11; i++) {
                           //   for (let j = 0; j < accounts.length; j++) {
                           await predictionContract.connect(accounts[1]).predict(1, 1990 + i)
-                          //   await predictionContract.connect(accounts[1]).predict(2, 1990 + i)
+                          await predictionContract.connect(accounts[1]).predict(2, 1990 + i)
                           //   await predictionContract.connect(accounts[1]).predict(3, 1990 + i)
                           //   await predictionContract.connect(accounts[1]).predict(4, 1990 + i)
                           //   await predictionContract.connect(accounts[1]).predict(5, 1990 + i)
@@ -152,7 +151,7 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
                           assert(parseInt(difference.toString()) >= 0)
                       })
                   })
-                  it.only("check ", async () => {
+                  it("check ", async () => {
                       let array = []
 
                       for (let i = 0; i < 501; i++) {
@@ -193,14 +192,11 @@ import { MockV3Aggregator, PredictionContract, Token } from "../../typechain"
                           }
                       })
                   })
-                  it("test", async () => {
-                      const predictions1 = await predictionContract.getPredictions(1)
+                  it.only("test", async () => {
+                      const predictions1 = await predictionContract.getPredictionsOfUser(
+                          accounts[1].address
+                      )
                       console.log(predictions1.toString())
-                      const array = await predictionContract.updateDifference(1)
-                      await network.provider.send("evm_increaseTime", [interval.toNumber() + 6])
-                      await network.provider.send("evm_mine", [])
-                      const data = await predictionContract.getResult(1)
-                      console.log(data.toString())
                       //   array.map((item: any) => console.log(item["user"].toString()))
                   })
               })
